@@ -10,3 +10,9 @@ variable project_tag {
   description = "tag used in front on the VMs"
   default = "lfs"
 }
+
+variable node_type {
+  type        = string
+  description = "type of k8s node to deploy: control_plane | worker"
+  default = "worker"
+}

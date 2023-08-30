@@ -27,9 +27,10 @@ data "template_file" "control_plane_user_data" {
   # left hand var names are the var names used in the cloud-init yaml.
   vars = {
     ansible_ssh_public_key = file(var.ansible_ssh_public_key_filename)
-    node_type = "control_plane"
-    cni_installation_file_base64 = filebase64("weave-daemonset-k8s.yaml")
-    ansible_playbook_file_base64 = filebase64("../../ansible_playbook/control_plane.yaml")
+    node_type = var.node_type
+    cni_weave_installation_file_base64 = filebase64("weave-daemonset-k8s.yaml")
+    cni_calico_custom_resources_file_base64 = filebase64("calico-custom-resources.yaml")
+    ansible_playbook_file_base64 = filebase64("../../ansible_playbook/k8s_node_ansible_playbook.yaml")
   }
 }
 
@@ -39,16 +40,16 @@ resource "libvirt_cloudinit_disk" "control_plane_commoninit" {
 }
 
 # Defining VM Volume
-resource "libvirt_volume" "control_plane_os-qcow2" {
-  name = "${var.project_tag}_control_plane.qcow2"
+resource "libvirt_volume" "node_os-qcow2" {
+  name = "${var.project_tag}_${var.node_type}.qcow2"
   pool = "default" # List storage pools using virsh pool-list
   source = "/var/ubuntu_jammy_cloudimg.qcow2"
   format = "qcow2"
 }
 
 # Define KVM domain to create
-resource "libvirt_domain" "control_plane-vm" {
-  name   = "${var.project_tag}_control_plane_vm"
+resource "libvirt_domain" "node-vm" {
+  name   = "${var.project_tag}_${var.node_type}_vm"
   memory = "8192"
   vcpu   = 2
 
@@ -61,7 +62,7 @@ resource "libvirt_domain" "control_plane-vm" {
   }
 
   disk {
-    volume_id = "${libvirt_volume.control_plane_os-qcow2.id}"
+    volume_id = "${libvirt_volume.node_os-qcow2.id}"
   }
 
   console {
@@ -80,5 +81,5 @@ resource "libvirt_domain" "control_plane-vm" {
 
 # Output Server IP
 output "ip" {
-  value = "${libvirt_domain.control_plane-vm.network_interface.0.addresses.0}"
+  value = "${libvirt_domain.node-vm.network_interface.0.addresses.0}"
 }

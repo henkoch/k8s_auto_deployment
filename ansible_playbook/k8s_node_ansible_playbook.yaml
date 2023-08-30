@@ -143,13 +143,15 @@
       apt:
         update_cache: true
         package: ['lsb-release', 'software-properties-common', 'uidmap', 'vim','wget']
-    - name: kubeadm init
+
+    - name: kubeadm init for control plane
       become: yes
+      when: node_type == "control_plane"
       block:
         - name: run kubeadm init
           ansible.builtin.command:
           args:
-            cmd: kubeadm init
+            cmd: kubeadm init --pod-network-cidr=10.42.0.0/16
             creates: /etc/kubernetes/admin.conf
           register: kubeadm_init
         - name: write the content kubeadm init output to /home/ansible/kubeadm_init.log
@@ -181,3 +183,16 @@
           args:
             cmd: kubectl apply -f /home/ansible/cni_weavenet_deamonset.yaml
             creates: /opt/cni/bin/weave-net
+          when: cni_selection == 'weavenet'
+        - name: install CNI(calico)
+          become_user: ansible
+          ansible.builtin.command:
+          args:
+            cmd: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/tigera-operator.yaml
+          when: cni_selection == 'calico'
+        - name: install CNI(calico)
+          become_user: ansible
+          ansible.builtin.command:
+          args:
+            cmd: kubectl create -f /home/ansible/calico-custom-resources.yaml
+          when: cni_selection == 'calico'
