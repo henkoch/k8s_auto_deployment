@@ -1,4 +1,7 @@
 #cloud-config
+
+fqdn: ${vm_hostname}
+
 # Add groups to the system
 groups:
   - ansible
@@ -47,7 +50,7 @@ runcmd:
   - date > /home/ansible/DONE.txt
   - cd /home/ansible; git clone -b libvirt https://github.com/henkoch/k8s_auto_deployment.git
   - chown -R ansible:ansible /home/ansible
-  - ansible-playbook  --extra-vars "kubernetes_version=v1.28" --extra-vars "cni_selection=calico" --extra-vars "node_type=${node_type}" test_playbook.yaml
+  - ansible-playbook  --extra-vars "kubernetes_version=v1.28" --extra-vars "cni_selection=calico" --extra-vars "node_type=${node_type}" --extra-vars "discovery_token=${discovery_token}" --extra-vars "discovery_token_ca_cert_hash=${discovery_token_ca_cert_hash}" test_playbook.yaml
 #  - cd k8s_auto_deployment/ansible_playbook && ansible-playbook  --extra-vars "kubernetes_version=v1.28" ${node_type}.yaml
   - cp /var/log/cloud-init-output.log /home/ansible
   - id >> DONE.txt

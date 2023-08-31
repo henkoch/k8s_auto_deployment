@@ -16,3 +16,16 @@ variable node_type {
   description = "type of k8s node to deploy: control_plane | worker"
   default = "worker"
 }
+
+
+variable discovery_token_ca_cert_hash {
+  type        = string
+  description = "hash for validating that the root CA public key is valid, used by worker join"
+  default = ""
+}
+
+variable discovery_token {
+  type        = string
+  description = "discovery token, used by worker join"
+  default = ""
+}
